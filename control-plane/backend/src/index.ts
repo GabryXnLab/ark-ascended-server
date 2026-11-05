@@ -5,7 +5,7 @@ import * as Sentry from "@sentry/node";
 import express, { type Request, type Response, type NextFunction } from "express";
 import path from "node:path";
 import { existsSync } from "node:fs";
-import { config } from "./config.js";
+import { config, healthMode } from "./config.js";
 import { log } from "./logger.js";
 import { communityRouter, legacyCompatibilityRouter } from "./community-routes.js";
 import { startPlaytimeSync } from "./playtime-sync.js";
@@ -31,7 +31,7 @@ app.get("/api/health", async (_req, res) => {
   const persistence = await checkPersistence(config.dataDir);
   res.status(persistence.ok ? 200 : 503).json({
     ok: persistence.ok,
-    mode: config.ociMode,
+    mode: healthMode(config.instanceProvider, config.ociMode),
     provider: config.instanceProvider,
     revision: config.imageRevision,
     features: {

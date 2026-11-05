@@ -28,6 +28,12 @@ export function resolveInstanceProvider(env: NodeJS.ProcessEnv): InstanceProvide
   throw new Error(`INSTANCE_PROVIDER="${env.INSTANCE_PROVIDER}" non valido: valori ammessi oci, docker, mock`);
 }
 
+// OCI_MODE only describes how the OCI SDK authenticates, so it is meaningful
+// for the health payload only when the effective provider is OCI.
+export function healthMode(provider: InstanceProvider, ociMode: OciMode): string {
+  return provider === "oci" ? ociMode : provider;
+}
+
 function loadInstanceProvider(): InstanceProvider {
   try {
     return resolveInstanceProvider(process.env);

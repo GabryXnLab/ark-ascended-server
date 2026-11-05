@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveInstanceProvider } from "../src/config.js";
+import { healthMode, resolveInstanceProvider } from "../src/config.js";
 import { buildPlayerShares } from "../src/playtime-shares.js";
 
 test("senza INSTANCE_PROVIDER deriva da OCI_MODE (retrocompatibile)", () => {
@@ -39,4 +39,11 @@ test("con costo la somma delle quote torna esatta", () => {
   const shares = buildPlayerShares(players, 3, { amount: 10 });
   const sum = shares.reduce((s, p) => s + (p.shareAmount ?? 0), 0);
   assert.equal(Math.round(sum * 100) / 100, 10);
+});
+
+test("health mode follows the effective provider", () => {
+  assert.equal(healthMode("docker", "mock"), "docker");
+  assert.equal(healthMode("mock", "instance_principal"), "mock");
+  assert.equal(healthMode("oci", "instance_principal"), "instance_principal");
+  assert.equal(healthMode("oci", "config_file"), "config_file");
 });
