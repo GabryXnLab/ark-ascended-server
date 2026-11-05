@@ -176,4 +176,9 @@ done
 stop_wineserver
 kill "$XVFB_PID" 2>/dev/null || true
 log "ASA terminato con codice ${code}"
+# 143 is ASA ending on the SIGTERM sent by graceful_stop after saveworld:
+# a requested clean stop must not look like a crash to Docker or monitoring.
+if [[ "$stopping" == 1 && "$code" == 143 ]]; then
+  code=0
+fi
 exit "$code"
