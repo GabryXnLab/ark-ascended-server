@@ -93,6 +93,13 @@ docker exec asa rcon-cli -a 127.0.0.1:27020 -p "$RCON_PASSWORD" listplayers
 
 (Replace `$RCON_PASSWORD` with the actual password: it is not set in your host shell by default, unless you export it.)
 
+With Compose the container is not named `asa` (Compose names it `<project>-asa-1`, for example `compose-asa-1`): address the service instead, the password is read inside the container:
+
+```bash
+docker compose -f docker/compose/server-raw.compose.yml --env-file docker/compose/server-raw.env \
+  exec asa sh -c 'rcon-cli -a 127.0.0.1:27020 -p "$RCON_PASSWORD" listplayers'
+```
+
 ## Clean stop
 
 `docker stop` (SIGTERM) triggers: RCON `saveworld`, wait `ARK_SAVE_SETTLE_SEC`, SIGTERM to the whole ASA process group, wait up to `ARK_STOP_TIMEOUT_SEC`, then SIGKILL and `wineserver -k`. The worst case is about 70 seconds, so the container needs a grace period above that: the compose file sets `stop_grace_period: 90s`, `docker run` needs `--stop-timeout 90`. With Docker's default of 10 seconds the world can be cut mid-save.
