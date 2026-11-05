@@ -18,7 +18,7 @@
 #        --env-file docker/compose/control-plane.env up -d
 #
 # In produzione (immagini già pubblicate su GHCR dalla CI, vedi
-# .github/workflows/docker-build-control-plane.yml + deploy.yml) basta "pull" poi "up -d"
+# .github/workflows/images.yml) basta "pull" poi "up -d"
 # con gli stessi flag usati al primo avvio.
 
 services:

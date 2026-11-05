@@ -22,7 +22,7 @@ Stack: Node + TypeScript + Express + `oci-common`/`oci-core`.
 |---|---|
 | `mock` | sviluppo locale: simula STOPPED→STARTING→RUNNING, nessuna chiamata OCI |
 | `config_file` | usa `~/.oci/config` (dev con credenziali reali) |
-| `instance_principal` | produzione: nessuna chiave statica (vedi policy in OCI-SETUP.md §4) |
+| `instance_principal` | produzione: nessuna chiave statica (vedi docs/OCI-MODE.md) |
 
 ## Sviluppo
 

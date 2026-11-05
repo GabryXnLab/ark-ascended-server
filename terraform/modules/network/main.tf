@@ -1,5 +1,5 @@
 # Rete di base: VCN, subnet pubblica, internet gateway, route table, e due NSG
-# (game / control-plane) — porta 1:1 di infra/10-network.sh.
+# (game / control-plane) — derivata dai vecchi script di provisioning.
 #
 # Modello di sicurezza: una sola VCN + subnet pubblica condivisa da entrambe le
 # VM; l'isolamento per-ruolo è dato dagli NSG assegnati alle VNIC, non da

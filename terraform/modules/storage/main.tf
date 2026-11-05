@@ -1,5 +1,5 @@
 # Bucket Object Storage per il backup dei salvataggi ARK + lifecycle policy
-# (Standard → Archive → eliminazione). Porta 1:1 di infra/40-storage.sh.
+# (Standard → Archive → eliminazione). Derivata dai vecchi script di provisioning.
 
 data "oci_objectstorage_namespace" "ns" {
   compartment_id = var.compartment_id

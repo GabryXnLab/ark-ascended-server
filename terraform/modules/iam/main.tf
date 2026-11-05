@@ -1,6 +1,6 @@
 # Instance principal: dynamic group + policy, così le VM controllano le
-# istanze (e il bucket di backup) senza chiavi statiche. Porta 1:1 di
-# infra/15-iam.sh.
+# istanze (e il bucket di backup) senza chiavi statiche. Derivata dai vecchi script
+# di provisioning.
 
 resource "oci_identity_dynamic_group" "instances" {
   compartment_id = var.tenancy_ocid

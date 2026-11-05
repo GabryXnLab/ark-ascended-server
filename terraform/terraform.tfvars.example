@@ -13,7 +13,7 @@ region        = "us-ashburn-1"
 # Chiave pubblica SSH (contenuto del file .pub)
 # ssh_public_key = "ssh-ed25519 AAAA... utente@host"
 
-# Immagini pubblicate dalla CI (.github/workflows/docker-build.yml) su GHCR.
+# Immagini pubblicate dalla CI (.github/workflows/images.yml) su GHCR.
 # Sostituisci "gabryxnlab" con il tuo namespace GHCR se hai forkato il repo.
 # control_plane_docker_image = "ghcr.io/gabryxnlab/ark-ascended-control-plane:latest"
 # game_server_docker_image   = "ghcr.io/gabryxnlab/ark-ascended-server-managed:latest"
