@@ -49,7 +49,7 @@ Edit `local.env`:
 Backup folder permissions (see below), then start:
 
 ```bash
-mkdir -p backups && sudo chgrp 2000 backups && sudo chmod 2770 backups
+mkdir -p docker/compose/backups && sudo chgrp 2000 docker/compose/backups && sudo chmod 2770 docker/compose/backups
 docker compose -f docker/compose/local.compose.yml --env-file docker/compose/local.env up -d
 ```
 
