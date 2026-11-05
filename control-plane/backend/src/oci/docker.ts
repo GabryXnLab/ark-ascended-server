@@ -49,7 +49,12 @@ export class DockerInstanceController implements InstanceController {
     }
     this.warnedMissing = false;
     const state = mapContainerStatus(container.status, this.stopInProgress);
-    return { state, ocid, publicIp: state === "RUNNING" ? this.publicHost || null : null };
+    return {
+      state,
+      ocid,
+      publicIp: state === "RUNNING" ? this.publicHost || null : null,
+      ...(container.startedAt ? { bootId: container.startedAt } : {}),
+    };
   }
 
   async start(): Promise<void> {

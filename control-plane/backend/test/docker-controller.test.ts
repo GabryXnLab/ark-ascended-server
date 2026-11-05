@@ -19,6 +19,7 @@ interface Behaviour {
   stopDelayMs: number;
   stopCode: number;
   inspectDelayMs: number;
+  startedAt?: string;
 }
 
 async function fakeDocker(timeoutMs = 2000): Promise<Fake> {
@@ -34,7 +35,7 @@ async function fakeDocker(timeoutMs = 2000): Promise<Fake> {
     };
     if (b.status === null) return reply(404, { message: "No such container" });
     if (req.method === "GET") {
-      return setTimeout(() => reply(200, { Id: "abc", Config: { Env: ["RCON_PASSWORD=x"] }, State: { Status: b.status } }), b.inspectDelayMs);
+      return setTimeout(() => reply(200, { Id: "abc", Config: { Env: ["RCON_PASSWORD=x"] }, State: { Status: b.status, StartedAt: b.startedAt } }), b.inspectDelayMs);
     }
     if (req.url?.endsWith("/start")) return reply(b.startCode);
     if (req.url?.endsWith("/stop")) return setTimeout(() => reply(b.stopCode), b.stopDelayMs);
@@ -72,6 +73,19 @@ test("mappa gli stati del container sugli stati istanza", async () => {
       assert.equal(info.publicIp, ip, status);
       assert.equal(info.ocid, "docker:game");
     }
+  } finally { await f.close(); }
+});
+
+test("bootId follows the container StartedAt and is omitted when unknown", async () => {
+  const f = await fakeDocker();
+  try {
+    const ctrl = new DockerInstanceController("game", f.engine, 2000, "");
+    f.set({ status: "running" });
+    assert.equal((await ctrl.getInfo()).bootId, undefined);
+    f.set({ startedAt: "2026-11-05T10:03:39.1Z" });
+    assert.equal((await ctrl.getInfo()).bootId, "2026-11-05T10:03:39.1Z");
+    f.set({ startedAt: "2026-11-05T10:03:54.2Z" });
+    assert.equal((await ctrl.getInfo()).bootId, "2026-11-05T10:03:54.2Z");
   } finally { await f.close(); }
 });
 

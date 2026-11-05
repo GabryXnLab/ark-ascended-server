@@ -45,6 +45,8 @@ export interface ContainerState {
   id: string;
   /** created | running | paused | restarting | removing | exited | dead */
   status: string;
+  /** State.StartedAt: changes on every start, identifies one power cycle. */
+  startedAt: string;
 }
 
 interface EngineOptions {
@@ -62,8 +64,12 @@ export class DockerEngine {
     const res = await this.request("GET", `/containers/${encodeURIComponent(name)}/json`);
     if (res.status === 404) return null;
     if (res.status !== 200) throw this.unexpected("inspect", res);
-    const body = JSON.parse(res.body) as { Id?: unknown; State?: { Status?: unknown } };
-    return { id: String(body.Id ?? ""), status: String(body.State?.Status ?? "") };
+    const body = JSON.parse(res.body) as { Id?: unknown; State?: { Status?: unknown; StartedAt?: unknown } };
+    return {
+      id: String(body.Id ?? ""),
+      status: String(body.State?.Status ?? ""),
+      startedAt: String(body.State?.StartedAt ?? ""),
+    };
   }
 
   /** 204 e 304 (già avviato) sono entrambi successo. 404 solleva DockerApiError(404). */

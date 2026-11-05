@@ -34,11 +34,27 @@ let autoResumeAttempted = false;
 // Se l'agent sparisce dopo che il server era online (restart/crash del
 // container a VM ancora RUNNING), al suo ritorno serve un nuovo auto-resume.
 let agentUnavailableAfterResume = false;
+let lastBootId: string | undefined;
+
+/**
+ * A stop/start of the game container that completes between two ticks is
+ * never observed as non-RUNNING, so the per-cycle flags would stay set and
+ * ASA would not be resumed. The provider's bootId reveals that restart.
+ */
+export function isUnobservedRestart(previous: string | undefined, current: string | undefined): boolean {
+  return previous !== undefined && current !== undefined && previous !== current;
+}
 
 async function tick(): Promise<void> {
   try {
     const ctrl = await getController();
-    const { state } = await ctrl.getInfo();
+    const { state, bootId } = await ctrl.getInfo();
+    if (isUnobservedRestart(lastBootId, bootId)) {
+      autoResumeAttempted = false;
+      agentUnavailableAfterResume = false;
+      log.info("Game server restarted since the last check: auto-resume re-enabled");
+    }
+    if (bootId !== undefined) lastBootId = bootId;
     await serverShutdown.reconcile(state);
     if (state !== "RUNNING") {
       autoResumeAttempted = false;

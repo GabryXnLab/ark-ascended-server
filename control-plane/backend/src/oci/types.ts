@@ -13,6 +13,12 @@ export interface InstanceInfo {
   state: InstanceState;
   ocid: string;
   publicIp: string | null;
+  /**
+   * Identifies the current power cycle where the provider can observe it
+   * (docker: container StartedAt). Lets pollers notice a stop/start that
+   * happened entirely between two polls.
+   */
+  bootId?: string;
 }
 
 export interface InstanceController {
