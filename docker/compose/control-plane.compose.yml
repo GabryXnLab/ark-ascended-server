@@ -1,0 +1,84 @@
+# Control plane (backend + PWA [+ reverse proxy TLS opzionale]) in Docker.
+#
+# Due modalità, a seconda di chi termina il TLS sull'host:
+#
+# 1) Host DEDICATO a questo progetto (nessun altro servizio su 80/443/8443):
+#      docker compose -f docker/compose/control-plane.compose.yml \
+#        --env-file docker/compose/control-plane.env --profile caddy up -d
+#    Il profilo "caddy" avvia anche il reverse proxy/TLS bundled (Caddy),
+#    che si prende le porte 80/443 dell'host.
+#
+# 2) Host CONDIVISO con altri progetti (nginx/altro reverse proxy già presenti,
+#    es. un server di casa): NON attivare il profilo "caddy". Il backend espone solo
+#    ${CONTROL_PLANE_HOST_PORT:-3100} su 127.0.0.1, e il reverse proxy/TLS
+#    esistente sull'host (es. il vhost nginx già configurato per il dominio
+#    della PWA) continua a puntarci esattamente come faceva verso il vecchio
+#    processo systemd — nessuna porta condivisa viene toccata:
+#      docker compose -f docker/compose/control-plane.compose.yml \
+#        --env-file docker/compose/control-plane.env up -d
+#
+# In produzione (immagini già pubblicate su GHCR dalla CI, vedi
+# .github/workflows/docker-build-control-plane.yml + deploy.yml) basta "pull" poi "up -d"
+# con gli stessi flag usati al primo avvio.
+
+services:
+  backend:
+    image: ${CONTROL_PLANE_IMAGE:-ghcr.io/gabryxnlab/ark-ascended-control-plane:latest}
+    build:
+      context: ../..
+      dockerfile: docker/control-plane/Dockerfile
+    # "unless-stopped" applica già il backoff esponenziale integrato nel
+    # daemon Docker (100ms → 1min, si azzera se il container resta vivo oltre
+    # ~10s). Non esiste in Compose (senza Swarm) un parametro per tarare
+    # questo backoff diversamente — vedi issue #1: il crash-loop di 49h non è
+    # stato causato da un backoff assente, ma da ogni ciclo di crash che
+    # durava già ~35-40s (i retry dell'SDK OCI prima del crash), superando la
+    # soglia di reset e ripartendo sempre da zero. La causa vera era il
+    # processo che crashava, risolta a monte in boot-sync.ts.
+    restart: unless-stopped
+    # Relativo alla directory di QUESTO file per default (uso locale da
+    # docker/compose/). CONTROL_PLANE_ENV_FILE permette di puntare altrove
+    # (path assoluto) quando si lancia "docker compose" da una working
+    # directory diversa da dove vive il file — es. un runner CI che fa
+    # checkout in una directory diversa ad ogni run: --env-file interpola
+    # ${VAR} nel YAML, ma NON cambia dove "env_file:" cerca il file, sono due
+    # meccanismi distinti (riprodotto dal vivo: "env_file ... not found"
+    # anche con --env-file già puntato correttamente altrove).
+    env_file: ${CONTROL_PLANE_ENV_FILE:-control-plane.env}
+    volumes:
+      - control-plane-data:/data
+    expose:
+      - "3000"
+    ports:
+      # Solo su loopback: raggiungibile dal reverse proxy dell'host (nginx o
+      # altro), mai esposto direttamente su Internet. Cambia
+      # CONTROL_PLANE_HOST_PORT se la porta 3100 è già occupata sull'host.
+      - "127.0.0.1:${CONTROL_PLANE_HOST_PORT:-3100}:3000"
+
+  # Opzionale (profilo "caddy"): reverse proxy/TLS bundled, solo per host
+  # dedicati. Su host condivisi resta spento di default — vedi modalità 2 sopra.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    profiles: ["caddy"]
+    depends_on:
+      - backend
+    environment:
+      # Niente ":?required" qui: l'interpolazione di compose viene valutata
+      # per tutti i servizi anche quando il profilo "caddy" non è attivo (modalità
+      # 2, host condiviso), quindi un default vuoto evita di rompere il parsing
+      # del file in quel caso. Chi attiva davvero il profilo "caddy" deve comunque
+      # compilare ARKSA_DOMAIN in control-plane.env (vedi control-plane.env.example).
+      ARKSA_DOMAIN: ${ARKSA_DOMAIN:-}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../control-plane/Caddyfile.tmpl:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  control-plane-data:
+  caddy-data:
+  caddy-config:

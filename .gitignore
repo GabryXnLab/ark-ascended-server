@@ -1,0 +1,49 @@
+# Dipendenze
+node_modules/
+.pnp/
+.pnp.js
+
+# Build
+dist/
+dev-dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# Ambiente e segreti — MAI committare
+.env
+.env.*
+!.env.example
+docker/compose/*.env
+!docker/compose/*.env.example
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+oci_api_key*
+.oci/
+supabase/.temp/
+supabase/.branches/
+
+# Stato infra
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+infra/.last-deploy
+infra/outputs.json
+infra/.secrets/
+
+# Log e runtime
+*.log
+logs/
+.DS_Store
+
+# Storico playtime (dati runtime, non codice)
+control-plane/backend/data/
+*.jsonl
+
+# Dati server ARK (non vanno nel repo)
+saves/
+ShooterGame/
+SavedArks/

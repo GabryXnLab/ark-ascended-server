@@ -1,0 +1,35 @@
+#cloud-config
+# Bootstrap minimale: installa Docker, scrive l'env del backend e il Caddyfile,
+# poi avvia i due container. Tutta la build/logica applicativa vive nell'immagine
+# Docker (docker/control-plane/Dockerfile), non qui.
+package_update: true
+write_files:
+  - path: /etc/arksa/control-plane.env
+    permissions: '0600'
+    content: |
+      SUPABASE_URL=${supabase_url}
+      SUPABASE_PUBLISHABLE_KEY=${supabase_publishable_key}
+      SUPABASE_SECRET_KEY=${supabase_secret_key}
+      ADMIN_EMAILS=${admin_emails}
+      GAME_INSTANCE_OCID=${game_instance_ocid}
+      AGENT_URL=${agent_url}
+      AGENT_TOKEN=${agent_token}
+      OCI_MODE=instance_principal
+      CURSEFORGE_API_KEY=${curseforge_api_key}
+      PWA_DIST=/app/pwa
+  - path: /etc/caddy/Caddyfile
+    permissions: '0644'
+    content: |
+      ${caddy_site} {
+        reverse_proxy 127.0.0.1:3000
+        ${caddy_tls}
+        encode gzip
+      }
+runcmd:
+  - curl -fsSL https://get.docker.com | sh
+  - systemctl enable --now docker
+  - docker volume create arksa-control-plane-data
+  - "docker run -d --name arksa-backend --restart unless-stopped --env-file /etc/arksa/control-plane.env -v arksa-control-plane-data:/data -p 127.0.0.1:3000:3000 ${control_plane_image}"
+  - docker volume create arksa-caddy-data
+  - "docker run -d --name arksa-caddy --restart unless-stopped --network host -v /etc/caddy/Caddyfile:/etc/caddy/Caddyfile:ro -v arksa-caddy-data:/data caddy:2-alpine"
+final_message: "arksa control-plane bootstrap completato in $UPTIME secondi"

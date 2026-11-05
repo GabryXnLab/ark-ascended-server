@@ -1,0 +1,81 @@
+.operation-progress {
+  --operation-color: var(--glyph);
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--operation-color) 30%, var(--slab-border));
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--operation-color) 7%, var(--slab-2));
+}
+.operation-progress-online { --operation-color: var(--ember); }
+.operation-progress-error { --operation-color: var(--blood); }
+.operation-progress-stopping { --operation-color: var(--glyph); }
+
+.operation-progress-heading {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.operation-progress-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--operation-color) 14%, transparent);
+  color: var(--operation-color);
+}
+.operation-progress-title { min-width: 0; display: grid; gap: 2px; }
+.operation-progress-title strong { color: var(--bone); font-size: 13px; }
+.operation-progress-title small { color: var(--ash); font-size: 11px; line-height: 1.4; }
+.operation-progress-percent {
+  color: var(--operation-color);
+  font: 750 19px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.operation-progress-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.065);
+}
+.operation-progress-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--operation-color) 72%, white), var(--operation-color));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--operation-color) 35%, transparent);
+  transition: width 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.operation-progress-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  color: var(--ash);
+  font-size: 11px;
+}
+.operation-progress-meta span { display: inline-flex; align-items: center; gap: 4px; }
+.operation-progress-meta b { color: var(--bone); font-variant-numeric: tabular-nums; }
+.operation-progress-note,
+.operation-progress-error {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.operation-progress-note { color: var(--ash-dim); }
+.operation-progress-error { color: var(--blood-light); }
+.spin-soft { animation: spin 1.4s linear infinite; }
+
+@media (max-width: 430px) {
+  .operation-progress-heading { grid-template-columns: 34px minmax(0, 1fr); }
+  .operation-progress-percent { grid-column: 2; font-size: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .operation-progress-track > span { transition: none; }
+  .spin-soft { animation: none; }
+}

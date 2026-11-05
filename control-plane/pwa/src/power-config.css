@@ -1,0 +1,16 @@
+/* Card "Configurazione di avvio" nella tab Stato (Dashboard.tsx) */
+.startup-config .pill {
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+.startup-config select {
+  margin-bottom: 2px;
+}
+
+/* Timer auto-stop dentro la card Alimentazione: separato dal comando primario. */
+.idle-stop {
+  padding-top: 14px;
+  border-top: 1px solid var(--slab-border);
+}
+.idle-stop h3 { margin: 0; color: var(--bone); }

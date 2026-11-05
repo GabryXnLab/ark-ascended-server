@@ -1,0 +1,35 @@
+# Server ARK: Survival Ascended autonomo (immagine "raw"): niente control plane,
+# niente agent. Gestione con `docker compose up/down`.
+#
+# Uso:
+#   cp docker/compose/server-raw.env.example docker/compose/server-raw.env
+#   # imposta almeno RCON_PASSWORD
+#   docker compose -f docker/compose/server-raw.compose.yml --env-file docker/compose/server-raw.env up -d --build
+#
+# Al primo avvio SteamCMD scarica ~13GB nel volume: il server è pronto solo dopo.
+services:
+  asa:
+    image: ${GAME_SERVER_RAW_IMAGE:-ghcr.io/gabryxnlab/ark-ascended-server:latest}
+    build:
+      context: ../..
+      dockerfile: docker/game-server/Dockerfile
+      target: raw
+    # ASA/Proton sono solo x86: forza amd64 anche da un host ARM.
+    platform: linux/amd64
+    restart: unless-stopped
+    # Deve coprire saveworld + ARK_SAVE_SETTLE_SEC + ARK_STOP_TIMEOUT_SEC,
+    # altrimenti Docker manda SIGKILL prima che il mondo sia salvato.
+    stop_grace_period: 90s
+    env_file: ${GAME_SERVER_ENV_FILE:-server-raw.env}
+    volumes:
+      - asa-data:/data
+    ports:
+      - "7777:7777/udp"
+      - "27015:27015/udp"
+      # RCON opzionale dall'esterno: lo stop usa comunque 127.0.0.1 nel
+      # container. Se lo pubblichi, limita l'accesso con il firewall.
+      # - "27020:27020/tcp"
+
+volumes:
+  asa-data:
+    name: ${GAME_SERVER_DATA_VOLUME:-asa-data}

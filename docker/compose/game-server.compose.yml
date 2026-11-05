@@ -1,0 +1,75 @@
+# Game server ARK: Survival Ascended (Proton-GE + server-agent) in Docker.
+#
+# Uso:
+#   cp docker/compose/game-server.env.example docker/compose/game-server.env
+#   # modifica game-server.env con i tuoi valori (RCON_PASSWORD, AGENT_TOKEN, ...)
+#   docker compose -f docker/compose/game-server.compose.yml --env-file docker/compose/game-server.env up -d --build
+#
+# I file di gioco (~13GB, scaricati da SteamCMD al primo avvio) vivono nel
+# volume "game-server-data" — persistente tra restart/redeploy dell'immagine,
+# coerente con la decisione "mai distruggere i dati, boot volume persistente".
+# Per puntare a una directory host specifica (es. il boot/block volume OCI
+# montato in /mnt/arksa), sostituire il volume con un bind mount:
+#   volumes: ["/mnt/arksa:/data"]
+
+services:
+  game-server:
+    image: ${GAME_SERVER_IMAGE:-ghcr.io/gabryxnlab/ark-ascended-server-managed:latest}
+    build:
+      context: ../..
+      dockerfile: docker/game-server/Dockerfile
+      target: managed
+    # ASA/Proton sono solo x86: forza amd64 anche se buildi/giri da un host ARM.
+    platform: linux/amd64
+    restart: unless-stopped
+    # Consente al SIGTERM dell'agent di eseguire saveworld e chiudere l'intero
+    # prefix Wine prima che Docker mandi SIGKILL.
+    stop_grace_period: 90s
+    # Relativo alla directory di QUESTO file per default (uso locale da
+    # docker/compose/). GAME_SERVER_ENV_FILE permette di puntare altrove (path
+    # assoluto) quando si lancia "docker compose" da una working directory
+    # diversa da dove vive il file — es. il self-update systemd al boot, che
+    # scarica il compose file in /opt/arksa/ ma tiene l'env reale in
+    # /etc/arksa/: --env-file interpola ${VAR} nel YAML, ma NON cambia dove
+    # "env_file:" cerca il file, sono due meccanismi distinti (riprodotto dal
+    # vivo: "env file ... not found", stesso bug già risolto per il control
+    # plane in control-plane.compose.yml).
+    env_file: ${GAME_SERVER_ENV_FILE:-game-server.env}
+    # Le variabili dell'agent sono esplicite anche per rendere visibile il
+    # contratto Compose e consentire override mirati nei test. In produzione
+    # interpolazione ed `env_file` leggono lo stesso game-server.env unico.
+    environment:
+      AGENT_TOKEN: ${AGENT_TOKEN:-}
+      AGENT_MODE: ${AGENT_MODE:-live}
+      AGENT_PORT: ${AGENT_PORT:-8787}
+      AGENT_BIND: ${AGENT_BIND:-0.0.0.0}
+      RCON_HOST: ${RCON_HOST:-127.0.0.1}
+      RCON_PORT: ${RCON_PORT:-27020}
+      RCON_PASSWORD: ${RCON_PASSWORD:-}
+      IDLE_STOP_MINUTES: ${IDLE_STOP_MINUTES:-20}
+      WATCHER_INTERVAL_SEC: ${WATCHER_INTERVAL_SEC:-60}
+      OCI_INSTANCE_OCID: ${OCI_INSTANCE_OCID:-}
+      OCI_AUTH: ${OCI_AUTH:-instance_principal}
+      BACKUP_BUCKET: ${BACKUP_BUCKET:-}
+      DISK_GROW_THRESHOLD_PCT: ${DISK_GROW_THRESHOLD_PCT:-80}
+      DISK_GROW_STEP_GB: ${DISK_GROW_STEP_GB:-20}
+      DISK_GROW_MAX_GB: ${DISK_GROW_MAX_GB:-150}
+      DISK_GROW_COOLDOWN_MIN: ${DISK_GROW_COOLDOWN_MIN:-60}
+      ARK_BOOT_IDLE_VPUS: ${ARK_BOOT_IDLE_VPUS:-10}
+    # cap_add: [SYS_NICE]  # opzionale: consente a launch.sh di alzare la
+    #   priorità di scheduling del processo ASA (nice negativo) senza girare
+    #   come root. Non abilitato di default: da testare prima su un'istanza
+    #   di prova, vedi "Priorità di processo e CPU affinity" in docs/PERFORMANCE.md.
+    volumes:
+      - game-server-data:/data
+    ports:
+      - "7777:7777/udp"
+      - "27015:27015/udp"
+      - "8787:8787/tcp"
+
+volumes:
+  game-server-data:
+    # Nome stabile e indipendente da directory/progetto Compose. Cloud-init
+    # crea proprio questo volume; prima Compose ne creava silenziosamente un
+    # altro derivato dal project name, rendendo ambiguo quale contenesse i dati.
+    name: ${GAME_SERVER_DATA_VOLUME:-arksa-game-data}

@@ -1,0 +1,447 @@
+/* ---------------------------------------------------------------------- *
+ * Editor configurazione — header di sezione con copia per-sezione,
+ * anteprime reali delle mappe, badge "già scaricata", pannello ModLibrary.
+ * ---------------------------------------------------------------------- */
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.section-header h2 { margin-bottom: 0; }
+
+/* Selettore di copia compatto, riusato da MapPicker (sezione Mappa), ConfigEditor
+   (sezione Mod) e GameSettingsEditor (ogni categoria di parametri). */
+.copy-from-inline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ash);
+  margin-top: 0;
+  flex-shrink: 0;
+}
+.copy-from-inline svg { color: var(--rune); flex-shrink: 0; }
+.copy-from-inline select {
+  padding: 4px 26px 4px 8px;
+  background-position: calc(100% - 13px) center, calc(100% - 8px) center;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--r-sm);
+  max-width: 130px;
+}
+.copy-from-inline-cat select { max-width: 110px; }
+
+/* Header dell'accordion (GameSettingsEditor): il bottone titolo condivide la riga
+   col mini-selettore di copia, invece di occupare tutta la larghezza da solo. */
+.accordion-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 12px;
+}
+.accordion-header-row .accordion-header {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Con display:contents i figli diventano grid item di .grid ma restano fuori
+   dalla sua regola `.grid > * { min-width: 0 }`: senza questa, il contenuto
+   largo (campi, tabelle) allarga l'intera pagina. */
+.config-editor-fieldset > * { min-width: 0; }
+
+.ini-raw-editor {
+  width: 100%;
+  min-height: 150px;
+  resize: vertical;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--slab-border);
+  border-radius: var(--r-sm);
+  background: rgba(0, 0, 0, 0.72);
+  color: var(--bone);
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+.ini-raw-editor:focus {
+  outline: 1px solid var(--rune);
+  border-color: var(--rune);
+}
+
+/* ---------------------------------------------------------------------- *
+ * Anteprime reali delle mappe (hotlink CDN ufficiali, fallback icona+colore)
+ * ---------------------------------------------------------------------- */
+.map-preset-card-photo {
+  position: relative;
+  padding: 0;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  justify-content: flex-end;
+}
+.map-preset-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.map-preset-photo-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.92) 100%);
+  z-index: 1;
+}
+.map-preset-name-photo {
+  position: relative;
+  z-index: 2;
+  color: var(--bone);
+  font-weight: 700;
+  padding: 6px 8px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+.map-preset-card-photo.map-preset-card-active {
+  border-color: var(--map-accent, #bdbdbd);
+  box-shadow: 0 0 0 1.5px var(--map-accent, #bdbdbd) inset;
+}
+.map-preset-card-photo .map-preset-check {
+  z-index: 3;
+  background: var(--void-deep);
+  border-radius: 50%;
+  padding: 2px;
+}
+
+/* Badge "già scaricata" (InstalledMods/ModsCatalog): la mod è già presente sul
+   disco del game server, condivisa tra le configurazioni, non verrà riscaricata. */
+.mod-shared-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--rune-light);
+  font-weight: 600;
+}
+.mod-shared-badge svg { color: var(--rune); }
+
+/* ---------------------------------------------------------------------- *
+ * ModLibrary — libreria mod installate, indipendente dalle configurazioni
+ * ---------------------------------------------------------------------- */
+.mod-library-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--slab-border);
+}
+.mod-library-item:last-child { border-bottom: none; }
+.mod-library-info { flex: 1; min-width: 0; }
+.mod-library-usedby {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.mod-library-usedby-pill {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ash);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--slab-border);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.mod-library-unused {
+  color: var(--ash-dim);
+  font-style: italic;
+}
+
+/* ---------------------------------------------------------------------- *
+ * Catalogo impostazioni ASA — tassonomia, filtri e campi accessibili
+ * ---------------------------------------------------------------------- */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.game-settings-editor { overflow: visible; }
+.game-settings-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.game-settings-heading h2 { margin-bottom: 7px; }
+.game-settings-intro { margin: 0; max-width: 720px; line-height: 1.55; }
+.game-settings-total {
+  min-width: 54px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: var(--rune-glow);
+  color: var(--rune-light);
+  font: 700 12px/1 var(--font-mono);
+  text-align: center;
+}
+
+.game-settings-toolbar {
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) minmax(180px, 230px) auto;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.game-settings-search { margin: 0; }
+.game-settings-tag-filter { margin: 0; gap: 5px; }
+.game-settings-tag-filter > span {
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.game-settings-tag-filter select { padding-block: 11px; font-size: 13px; }
+.game-settings-modified-filter {
+  min-height: 43px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--slab-border);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.025);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.game-settings-modified-filter input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  padding: 0;
+  border-radius: 5px;
+  box-shadow: none;
+  cursor: pointer;
+}
+.game-settings-modified-filter input[type="checkbox"]:checked {
+  border-color: var(--rune);
+  background: var(--rune);
+  box-shadow: inset 0 0 0 4px var(--slab-2);
+}
+
+.game-settings-category-nav {
+  display: flex;
+  gap: 7px;
+  margin: 0 -2px;
+  padding: 2px 2px 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rune-dim) transparent;
+}
+.game-settings-category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid var(--slab-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--ash);
+  font: 650 11px/1.2 var(--font-sans);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.game-settings-category-chip span {
+  min-width: 20px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--ash-dim);
+  font: 650 11px/1 var(--font-mono);
+}
+.game-settings-category-chip:hover { border-color: var(--slab-border-hover); color: var(--bone); }
+.game-settings-category-chip.is-active {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--rune-glow);
+  color: var(--rune-light);
+}
+.game-settings-category-chip.is-active span { color: var(--rune-light); }
+
+.game-settings-results {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 30px;
+  margin-bottom: 10px;
+  color: var(--ash-dim);
+  font-size: 11px;
+}
+.game-settings-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--rune-light);
+  font: 650 11px var(--font-sans);
+  cursor: pointer;
+}
+
+.game-settings-accordion { gap: 10px; }
+.game-settings-category { background: rgba(255, 255, 255, 0.018); }
+.game-settings-category.is-open { background: rgba(255, 255, 255, 0.026); }
+.game-settings-category .accordion-header-row { padding-right: 10px; }
+.game-settings-category .accordion-header { align-items: center; min-height: 66px; text-align: left; }
+.game-settings-category-heading { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.game-settings-category-description {
+  color: var(--ash-dim);
+  font-size: 11px;
+  font-weight: 450;
+  line-height: 1.35;
+}
+.game-settings-category-meta { display: inline-flex; align-items: center; gap: 9px; flex: 0 0 auto; }
+.game-settings-edited-count {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--rune-glow);
+  color: var(--rune-light);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.game-settings-category .copy-from-inline { margin: 0; }
+.game-settings-category .accordion-body {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 2px 12px 12px;
+}
+
+.game-setting-field {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid var(--slab-border);
+  border-radius: var(--r-md);
+  background: var(--slab-2);
+  transition: border-color 0.16s, background 0.16s;
+}
+.game-setting-field:focus-within { border-color: rgba(255, 255, 255, 0.34); }
+.game-setting-field.is-modified {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.055), var(--slab-2) 52%);
+}
+.game-setting-field-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.game-setting-field .field-hint {
+  margin: 0;
+  color: var(--bone);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.game-setting-modified-badge {
+  flex: 0 0 auto;
+  color: var(--rune-light);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.game-setting-key {
+  display: block;
+  max-width: 100%;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--ash-dim);
+  font: 11px/1.35 var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.game-setting-field .field-desc {
+  min-height: 31px;
+  margin: 7px 0 9px;
+  color: var(--ash);
+}
+.game-setting-control input,
+.game-setting-control select { padding-block: 10px; font-size: 13px; }
+
+.game-setting-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 9px; }
+.game-setting-tag {
+  padding: 3px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--ash-dim);
+  font: 600 11px/1.2 var(--font-sans);
+  cursor: pointer;
+}
+.game-setting-tag:hover { border-color: rgba(255, 255, 255, 0.28); color: var(--rune-light); }
+.game-setting-tag.is-active { border-color: var(--rune-dim); background: var(--rune-glow); color: var(--rune-light); }
+
+.game-setting-field .drag-number-slider { margin-top: 3px; }
+.game-setting-field .drag-number-slider input[type="range"] {
+  min-height: 30px;
+  touch-action: pan-y;
+  overscroll-behavior-x: contain;
+}
+.drag-number-range-hint {
+  color: var(--ash-dim);
+  font: 11px/1.2 var(--font-mono);
+  text-align: right;
+}
+
+.game-settings-empty {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  padding: 30px 16px;
+  border: 1px dashed var(--slab-border-hover);
+  border-radius: var(--r-md);
+  color: var(--ash);
+  text-align: center;
+}
+.game-settings-empty p { margin: 0; font-size: 13px; }
+.game-settings-empty .btn-secondary { padding: 8px 12px; font-size: 11px; }
+
+@media (max-width: 760px) {
+  .game-settings-toolbar { grid-template-columns: minmax(0, 1fr) minmax(145px, 0.65fr); }
+  .game-settings-modified-filter { grid-column: 1 / -1; justify-self: start; min-height: 38px; }
+  .game-settings-category .accordion-body { grid-template-columns: 1fr; }
+  .game-settings-category-description { display: none; }
+}
+
+@media (max-width: 520px) {
+  .game-settings-heading { gap: 10px; }
+  .game-settings-total { min-width: 46px; }
+  .game-settings-toolbar { grid-template-columns: 1fr; }
+  .game-settings-modified-filter { grid-column: auto; }
+  .game-settings-category .accordion-header-row { align-items: stretch; flex-direction: column; padding: 0 10px 10px; }
+  .game-settings-category .accordion-header { width: 100%; padding: 13px 5px 7px; }
+  .game-settings-category .copy-from-inline { align-self: flex-end; }
+  .game-settings-edited-count { display: none; }
+  .game-settings-results { align-items: flex-start; }
+}
+
+/* Contenitore che disabilita in blocco l'editor in sola lettura senza alterare
+   la griglia: i figli restano figli diretti di .grid. */
+.config-editor-fieldset {
+  display: contents;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+/* Con display:contents i figli diventano grid item di .grid ma restano fuori
+   dalla sua regola `.grid > * { min-width: 0 }`: senza questa, il contenuto
+   largo (campi, tabelle) allarga l'intera pagina. */
+.config-editor-fieldset > * { min-width: 0; }

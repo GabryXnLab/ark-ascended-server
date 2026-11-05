@@ -1,0 +1,155 @@
+# Modalità locale: pannello (control plane) e game server sullo stesso host Docker.
+# Il pannello avvia/ferma il container del gioco; nessuna dipendenza da OCI.
+# Guida: docs/LOCAL-MODE.md.
+#
+# Uso:
+#   cp docker/compose/local.env.example docker/compose/local.env   # e compila
+#   mkdir -p <BACKUP_HOST_DIR> && chgrp <BACKUP_GID> <BACKUP_HOST_DIR> && chmod 2770 <BACKUP_HOST_DIR>
+#   docker compose -f docker/compose/local.compose.yml --env-file docker/compose/local.env up -d
+#   docker compose -f docker/compose/local.compose.yml --env-file docker/compose/local.env --profile game create game-server
+# Poi si accende e si spegne il gioco dalla PWA. Con --profile caddy parte anche il TLS.
+# Aggiornare il gioco, a server spento:
+#   docker compose ... --profile game pull game-server && docker compose ... --profile game create --force-recreate game-server
+
+services:
+  control-plane:
+    image: ${CONTROL_PLANE_IMAGE:-ghcr.io/gabryxnlab/ark-ascended-control-plane:latest}
+    build:
+      context: ../..
+      dockerfile: docker/control-plane/Dockerfile
+    container_name: arksa-control-plane
+    restart: unless-stopped
+    environment:
+      INSTANCE_PROVIDER: docker
+      DOCKER_HOST: tcp://docker-proxy:2375
+      GAME_CONTAINER_NAME: ${GAME_CONTAINER_NAME:-arksa-game-server}
+      PUBLIC_HOST: ${PUBLIC_HOST:-}
+      GAME_PORT: ${GAME_PORT:-7777}
+      BACKUP_DIR: /backups
+      # Deve essere >= stop_grace_period del game server (saveworld + backup).
+      DOCKER_STOP_TIMEOUT_SEC: ${DOCKER_STOP_TIMEOUT_SEC:-150}
+      AGENT_URL: http://game-server:8787
+      AGENT_TOKEN: ${AGENT_TOKEN:?AGENT_TOKEN obbligatorio}
+      SUPABASE_URL: ${SUPABASE_URL:?SUPABASE_URL obbligatorio}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:?SUPABASE_PUBLISHABLE_KEY obbligatorio}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:?SUPABASE_SECRET_KEY obbligatorio}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:?ADMIN_EMAILS obbligatorio}
+      COMMUNITY_CREATION_ENABLED: ${COMMUNITY_CREATION_ENABLED:-true}
+      FLEET_PROVISIONING_ENABLED: "false"
+      CURSEFORGE_API_KEY: ${CURSEFORGE_API_KEY:-}
+    # Il pannello gira come 100:101; il gruppo condiviso con l'agent (steam) è
+    # l'unico modo di scrivere nella cartella dei backup senza aprirla a tutti.
+    group_add:
+      - "${BACKUP_GID:-2000}"
+    volumes:
+      - control-plane-data:/data
+      - ${BACKUP_HOST_DIR:-./backups}:/backups
+    ports:
+      # Solo loopback: per esporre il pannello usare un reverse proxy (profilo caddy).
+      - "${PANEL_BIND:-127.0.0.1}:${PANEL_PORT:-3100}:3000"
+    networks:
+      arksa:
+        # Il Caddyfile bundled punta a "backend:3000".
+        aliases: [backend]
+      docker-api: {}
+    depends_on:
+      - docker-proxy
+
+  # Unico componente che vede il socket Docker; il pannello non lo monta mai.
+  docker-proxy:
+    image: ghcr.io/wollomatic/socket-proxy:1
+    container_name: arksa-docker-proxy
+    restart: unless-stopped
+    # Il socket è root:docker; 65534 + gruppo docker evita di girare come root.
+    user: "65534:${DOCKER_GID:?DOCKER_GID obbligatorio (getent group docker)}"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64M
+    command:
+      - -listenip=0.0.0.0
+      - -allowfrom=arksa-control-plane
+      # Le regex sono ancorate da ^ e $ dal proxy; il prefisso /vX.Y è facoltativo.
+      - -allowGET=(/v[0-9.]+)?/containers/${GAME_CONTAINER_NAME:-arksa-game-server}/json
+      - -allowPOST=(/v[0-9.]+)?/containers/${GAME_CONTAINER_NAME:-arksa-game-server}/(start|stop)
+      - -watchdoginterval=3600
+      - -stoponwatchdog
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - docker-api
+
+  # Profilo "game": il container lo crea l'utente con "create" (create = root
+  # sull'host, quindi mai concesso al pannello); il pannello può solo start/stop.
+  game-server:
+    image: ${GAME_SERVER_IMAGE:-ghcr.io/gabryxnlab/ark-ascended-server-managed:latest}
+    build:
+      context: ../..
+      dockerfile: docker/game-server/Dockerfile
+      target: managed
+    profiles: [game]
+    container_name: ${GAME_CONTAINER_NAME:-arksa-game-server}
+    # ASA/Proton sono solo x86.
+    platform: linux/amd64
+    # Con unless-stopped il container ripartirebbe subito dopo il self-stop dell'agent.
+    restart: "no"
+    stop_grace_period: 90s
+    environment:
+      AGENT_PLATFORM: docker
+      AGENT_TOKEN: ${AGENT_TOKEN:?AGENT_TOKEN obbligatorio}
+      AGENT_MODE: live
+      RCON_PASSWORD: ${RCON_PASSWORD:?RCON_PASSWORD obbligatorio}
+      BACKUP_DIR: /backups
+      BACKUP_KEEP_VERSIONS: ${BACKUP_KEEP_VERSIONS:-5}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      DISK_GROW_STEP_GB: "0"
+      SESSION_NAME: ${SESSION_NAME:-ARK Ascended Server}
+      MAX_PLAYERS: ${MAX_PLAYERS:-20}
+      GAME_PORT: ${GAME_PORT:-7777}
+      QUERY_PORT: ${QUERY_PORT:-27015}
+      SERVER_PASSWORD: ${SERVER_PASSWORD:-}
+      IDLE_STOP_MINUTES: ${IDLE_STOP_MINUTES:-20}
+    group_add:
+      - "${BACKUP_GID:-2000}"
+    volumes:
+      - game-data:/data
+      - ${BACKUP_HOST_DIR:-./backups}:/backups
+    ports:
+      - "${GAME_PORT:-7777}:${GAME_PORT:-7777}/udp"
+      - "${QUERY_PORT:-27015}:${QUERY_PORT:-27015}/udp"
+      # 8787 (agent) non è pubblicata: la raggiunge solo il pannello sulla rete arksa.
+    networks:
+      - arksa
+
+  # Opzionale (profilo "caddy"): TLS per host dedicati. L'immagine del pannello
+  # non include un reverse proxy; il Caddyfile è quello del control plane.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    profiles: [caddy]
+    depends_on:
+      - control-plane
+    environment:
+      ARKSA_DOMAIN: ${ARKSA_DOMAIN:-}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../control-plane/Caddyfile.tmpl:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - arksa
+
+networks:
+  arksa: {}
+  # internal: il proxy non ha uscita verso l'esterno e lo raggiungono solo i due servizi collegati.
+  docker-api:
+    internal: true
+
+volumes:
+  control-plane-data:
+  caddy-data:
+  caddy-config:
+  game-data:
+    name: ${GAME_SERVER_DATA_VOLUME:-arksa-game-data}

@@ -1,0 +1,32 @@
+{
+  "name": "arksa-control-plane-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend control plane: start/stop istanza OCI, proxy verso il server-agent, serve la PWA.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test --import tsx test/*.test.ts"
+  },
+  "dependencies": {
+    "@sentry/node": "^10.75.3",
+    "@supabase/supabase-js": "2.100.0",
+    "express": "^4.19.2",
+    "oci-common": "^2.80.0",
+    "oci-core": "^2.80.0",
+    "oci-objectstorage": "^2.137.0",
+    "oci-usageapi": "^2.80.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,25 @@
+# Ambiente di sviluppo locale: control plane in modalità mock (nessuna chiamata
+# OCI reale, nessun game server richiesto), utile per verificare che l'immagine
+# si builda e gira, e per sviluppare la PWA contro un backend vero.
+#
+# Uso:
+#   docker compose -f docker/compose/dev.compose.yml up --build
+#   → http://localhost:3000
+
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: docker/control-plane/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      SUPABASE_URL: ${SUPABASE_URL:?avvia Supabase locale o indica un progetto di sviluppo}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:?publishable key richiesta}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY:?secret key richiesta}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:?email admin richiesta}
+      OCI_MODE: mock
+      AGENT_URL: http://localhost:9999
+      AGENT_TOKEN: dev-agent-token

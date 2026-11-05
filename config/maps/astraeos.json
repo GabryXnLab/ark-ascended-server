@@ -1,0 +1,17 @@
+{
+  "id": "astraeos",
+  "name": "Astraeos",
+  "description": "DLC ufficiale a pagamento a tema greco per ARK: Survival Ascended. Mappa iniziale del progetto.",
+  "map": "Astraeos_WP",
+  "mods": [],
+  "companionMods": {
+    "wardrobe": 1042321,
+    "trireme": 1015955,
+    "mythicalCreatures": 1122696
+  },
+  "source": "https://store.steampowered.com/app/3483400/ARK__Astraeos/",
+  "notes": "Il deployment di produzione usa il DLC ufficiale completo, incluso nei file del dedicated server e senza ModID. I client devono possedere Astraeos sulla propria piattaforma. La vecchia mod gratuita CurseForge 988598 è parziale e non appartiene a questo profilo.",
+  "consoleCompatible": true,
+  "consoleNote": "Astraeos è un DLC ufficiale cross-platform: i client PlayStation/Xbox devono acquistarlo sulla propria piattaforma prima di entrare.",
+  "active": true
+}

@@ -1,0 +1,57 @@
+# Copia in terraform.tfvars (gitignored) e compila con i valori del tuo tenancy.
+# Modalità OCI: docs/OCI-MODE.md.
+
+tenancy_ocid = "ocid1.tenancy.oc1..xxxxxxxx"
+region        = "us-ashburn-1"
+
+# Vuoto = tenancy root
+# compartment_ocid = "ocid1.compartment.oc1..xxxxxxxx"
+
+# Vuoto = il primo disponibile nella regione
+# availability_domain = "xxxx:US-ASHBURN-1-AD-1"
+
+# Chiave pubblica SSH (contenuto del file .pub)
+# ssh_public_key = "ssh-ed25519 AAAA... utente@host"
+
+# Immagini pubblicate dalla CI (.github/workflows/docker-build.yml) su GHCR.
+# Sostituisci "gabryxnlab" con il tuo namespace GHCR se hai forkato il repo.
+# control_plane_docker_image = "ghcr.io/gabryxnlab/ark-ascended-control-plane:latest"
+# game_server_docker_image   = "ghcr.io/gabryxnlab/ark-ascended-server-managed:latest"
+
+# Dominio pubblico per la PWA (TLS Let's Encrypt automatico via Caddy). Vuoto =
+# certificato self-signed interno (avviso nel browser, ok per test).
+# arksa_domain = "arksa.example.com"
+
+# Auth Google + Supabase. Tutti obbligatori se
+# manage_control_plane=true; la secret key non va mai esposta nel browser.
+# supabase_url             = "https://xxxxxxxx.supabase.co"
+# supabase_publishable_key = "eyJ...anon..."
+# supabase_secret_key      = "eyJ...service_role..."
+# admin_emails             = "admin@example.com"
+# curseforge_api_key = ""
+
+# Obbligatorio se il repo/pacchetto GHCR sono privati (self-update al boot del
+# game server: scarica il compose file da raw.githubusercontent.com e fa
+# "docker login ghcr.io" prima del pull — entrambi senza auth rispondono
+# 404/unauthorized, verificato dal vivo). Serve un token con "Contents:
+# read-only" (repo) + "Packages: read" (GHCR); un fine-grained PAT dedicato è
+# la scelta più sicura, un classic PAT con scope repo+read:packages funziona
+# comunque.
+# github_token = "github_pat_..."
+
+# max_players     = 20
+# server_password = ""
+
+# Lascia false al primo provisioning: il container scarica ASA (~13GB) in
+# background, uno stop troppo presto interromperebbe l'installazione.
+# game_server_auto_stop = false
+
+# --- Adottare rete/control-plane già esistenti -----
+# Scenario: un control plane preesistente su un host condiviso con altri
+# progetti (rete non ricreabile/distruggibile da questo Terraform) — si vuole
+# gestire con Terraform SOLO il game server, riusando VCN/subnet esistenti.
+# manage_control_plane     = false
+# create_vcn               = false
+# create_control_plane_nsg = false
+# existing_vcn_id          = "ocid1.vcn.oc1...."
+# existing_subnet_id       = "ocid1.subnet.oc1...."

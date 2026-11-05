@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [server-agent, control-plane/backend, control-plane/pwa]
+    defaults:
+      run:
+        working-directory: ${{ matrix.package }}
+    steps:
+      - uses: actions/checkout@v7
+      # Node 24: i test della PWA usano il type-stripping nativo.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ${{ matrix.package }}/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  shell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Sintassi bash
+        run: |
+          set -e
+          for f in docker/game-server/*.sh docker/control-plane/*.sh scripts/*.sh; do
+            bash -n "$f"
+          done
+      - name: shellcheck
+        run: shellcheck -S warning docker/game-server/*.sh docker/control-plane/*.sh scripts/*.sh
+
+  compose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: docker compose config
+        working-directory: docker/compose
+        run: |
+          set -e
+          # I compose leggono l'env reale (gitignored) via env_file: si usa l'example.
+          for c in control-plane game-server server-raw; do
+            cp "$c.env.example" "$c.env"
+            docker compose --env-file "$c.env.example" -f "$c.compose.yml" config -q
+          done
+          docker compose --env-file local.env.example -f local.compose.yml config -q
+          SUPABASE_URL=https://your-project-ref.supabase.co SUPABASE_PUBLISHABLE_KEY=x \
+            SUPABASE_SECRET_KEY=x ADMIN_EMAILS=admin@example.com \
+            docker compose -f dev.compose.yml config -q

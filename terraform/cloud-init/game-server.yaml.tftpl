@@ -1,0 +1,108 @@
+#cloud-config
+# Bootstrap: installa Docker e configura un servizio systemd che, a OGNI avvio
+# dell'istanza (non solo al primo), scarica il compose file più recente dal
+# repo e fa "docker compose pull && up -d". Questo è il meccanismo di deploy
+# per un host "on-demand" come il game server: passa la maggior parte del
+# tempo SPENTO, quindi un deploy push-based (CI che si connette all'host)
+# fallirebbe quasi sempre semplicemente perché l'host non è raggiungibile. Far
+# scaricare l'ultima immagine pubblicata (tag "latest") e l'ultimo compose file
+# ad ogni accensione garantisce invece che l'accensione successiva a un push su
+# main sia sempre quella aggiornata, senza bisogno di coordinamento con la CI.
+#
+# cloud-init "runcmd" gira solo al PRIMO boot dell'istanza: per questo il pull
+# vive in un'unità systemd (WantedBy=multi-user.target), eseguita ad ogni boot
+# incluso il primo. I file di gioco (~13GB) restano nel volume persistente
+# "arksa-game-data" (mai ricreato, sopravvive a ogni redeploy/aggiornamento).
+package_update: true
+write_files:
+  # Token separato dall'env del container: se repo/pacchetto GHCR sono privati, il
+  # curl del compose file e il "docker login" (sotto) richiedono autenticazione —
+  # raw.githubusercontent.com accetta l'header Authorization anche per il download
+  # anonimo via CDN (verificato dal vivo: 404 senza token, 200 con "Authorization:
+  # token <PAT>"). Vuoto (fork con repo pubblico) = entrambi gli step si saltano.
+  - path: /etc/arksa/deploy.env
+    permissions: '0600'
+    content: |
+      GITHUB_TOKEN=${github_token}
+  - path: /etc/arksa/game-server.env
+    permissions: '0600'
+    content: |
+      AGENT_TOKEN=${agent_token}
+      AGENT_MODE=live
+      RCON_HOST=127.0.0.1
+      RCON_PORT=27020
+      RCON_PASSWORD=${rcon_password}
+      SESSION_NAME=ARK Ascended Server
+      MAX_PLAYERS=${max_players}
+      GAME_PORT=7777
+      QUERY_PORT=27015
+      SERVER_PASSWORD=${server_password}
+      SERVER_PLATFORM=ALL
+      IDLE_STOP_MINUTES=20
+      WATCHER_INTERVAL_SEC=60
+      OCI_AUTH=instance_principal
+      BACKUP_BUCKET=${backup_bucket_name}
+      GAME_SERVER_IMAGE=${game_server_image}
+      GAME_SERVER_DATA_VOLUME=arksa-game-data
+      ARK_AUTO_UPDATE=1
+      ARK_SAVE_SETTLE_SEC=15
+      ARK_BOOT_IDLE_VPUS=10
+  - path: /etc/systemd/system/arksa-game-server.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=ARK on-demand game server (Docker Compose, self-update al boot)
+      After=docker.service network-online.target
+      Requires=docker.service
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      WorkingDirectory=/opt/arksa
+      EnvironmentFile=/etc/arksa/deploy.env
+      Environment=COMPOSE_PROJECT_NAME=arksa-game-server
+      # Interpola $${GAME_SERVER_ENV_FILE} dentro game-server.compose.yml (la
+      # direttiva "env_file:" del container, distinta da "--env-file" sotto che
+      # interpola solo i $${VAR} nel YAML): senza, il container cercherebbe
+      # l'env relativo alla working directory del compose file scaricato
+      # (/opt/arksa/game-server.env), non dove vive davvero (/etc/arksa/).
+      Environment=GAME_SERVER_ENV_FILE=/etc/arksa/game-server.env
+      # Il compose file viene scaricato dal repo ad ogni avvio invece di essere
+      # duplicato/staticamente incorporato qui, così un cambiamento a
+      # docker/compose/game-server.compose.yml (porte, volumi, nuovi servizi)
+      # si applica al prossimo power-on senza richiedere un nuovo `terraform apply`.
+      # Repo privato: serve l'header Authorization, altrimenti raw.githubusercontent.com
+      # risponde 404 (indistinguibile da "file non trovato"). Repo pubblico (nessun
+      # token): l'header si omette, curl scarica comunque in anonimo.
+      %{ if github_token != "" }
+      ExecStartPre=/usr/bin/curl -fsSL -H "Authorization: token $${GITHUB_TOKEN}" -o /opt/arksa/game-server.compose.yml https://raw.githubusercontent.com/${github_repo}/${github_ref}/docker/compose/game-server.compose.yml
+      %{ else }
+      ExecStartPre=/usr/bin/curl -fsSL -o /opt/arksa/game-server.compose.yml https://raw.githubusercontent.com/${github_repo}/${github_ref}/docker/compose/game-server.compose.yml
+      %{ endif }
+      # Pacchetto GHCR privato: senza login il pull risponde "unauthorized" (verificato
+      # dal vivo). --password-stdin evita di esporre il token nella process list.
+      # Pacchetto pubblico (nessun token): lo step si salta, "docker login" con
+      # password vuota fallirebbe comunque ed è superfluo per un pull anonimo.
+      %{ if github_token != "" }
+      ExecStartPre=/bin/sh -c 'echo "$${GITHUB_TOKEN}" | /usr/bin/docker login ghcr.io -u ${github_owner} --password-stdin'
+      %{ endif }
+      ExecStartPre=/usr/bin/docker compose -f /opt/arksa/game-server.compose.yml --env-file /etc/arksa/game-server.env pull
+      ExecStart=/usr/bin/docker compose -f /opt/arksa/game-server.compose.yml --env-file /etc/arksa/game-server.env up -d
+      # Conserva container e rete tra due power cycle. `up -d` ricrea comunque
+      # il container quando compose o digest immagine cambiano; nel caso comune
+      # lo riavvia invece senza pagare ogni volta remove/create della risorsa.
+      ExecStop=/usr/bin/docker compose -f /opt/arksa/game-server.compose.yml --env-file /etc/arksa/game-server.env stop
+      TimeoutStartSec=600
+      TimeoutStopSec=90
+
+      [Install]
+      WantedBy=multi-user.target
+runcmd:
+  - install -d -o root -g root /opt/arksa
+  - curl -fsSL https://get.docker.com | sh
+  - systemctl enable --now docker
+  - docker volume create arksa-game-data
+  - systemctl daemon-reload
+  - systemctl enable --now arksa-game-server.service
+final_message: "arksa game-server bootstrap completato in $UPTIME secondi (SteamCMD prosegue in background nel container: 30-60 min al primo avvio)"

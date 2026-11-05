@@ -1,0 +1,10 @@
+# Template Caddyfile per il reverse proxy/TLS del control plane in Docker.
+# ${ARKSA_DOMAIN} viene sostituito da docker/compose/control-plane.compose.yml
+# (Caddy espande le env var native, questo file è usato così com'è).
+# Domain di esempio: dominio reale, oppure "<ip-con-trattini>.sslip.io" per un
+# certificato Let's Encrypt valido senza un dominio proprio.
+
+{$ARKSA_DOMAIN} {
+	reverse_proxy backend:3000
+	encode gzip
+}
