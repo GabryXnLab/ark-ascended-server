@@ -29,7 +29,14 @@ if [[ "$(id -u)" == "0" ]]; then
   # successivo trova il lock/socket orfano e resta senza display virtuale.
   install -d -m 1777 /tmp/.X11-unix
   rm -f /tmp/.X99-lock /tmp/.X11-unix/X99
-  exec gosu steam "$0" "$@"
+  # gosu would reset the supplementary groups to steam's /etc/group entries,
+  # dropping the ones Docker adds with group_add (BACKUP_GID): without that
+  # group the agent cannot write the shared backup folder (EACCES).
+  extra_groups="$(id -G | tr ' ' '\n' | grep -vx 0 | paste -sd, - || true)"
+  steam_groups="$(id -G steam | tr ' ' ',')"
+  exec env HOME="$(getent passwd steam | cut -d: -f6)" \
+    setpriv --reuid=steam --regid=steam --groups="${steam_groups}${extra_groups:+,$extra_groups}" \
+    "$0" "$@"
 fi
 
 install -d /data/ark /data/proton-prefix /data/.steam /data/maps
