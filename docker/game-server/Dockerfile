@@ -77,9 +77,16 @@ RUN groupmod --new-name steam ubuntu \
 
 # SteamCMD e Proton-GE: fanno parte del runtime, vivono nell'immagine (non nel
 # volume dati) così un aggiornamento immagine porta anche l'aggiornamento loro.
+# Download to files with -f and retries, then verify: an HTTP error or a
+# truncated CDN response must fail loudly instead of surfacing as "not in gzip
+# format" mid-pipe (seen on the first GitHub-hosted build).
+ARG GE_PROTON_SHA512=d5792f4ac81d3832f5fe40467090c67d561b780c6a4236e76f8b59cb1d4ca25c82df91018e79d156bb267a67224a41f0d621a1e6cbbeec79040cc60275dc9e5a
 RUN install -d -o steam -g steam /opt/steamcmd /opt/proton \
-  && su steam -c "curl -sSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf - -C /opt/steamcmd" \
-  && su steam -c "curl -sSL https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${GE_PROTON_VERSION}/${GE_PROTON_VERSION}.tar.gz | tar -xz -C /opt/proton --strip-components=1"
+  && curl -fsSL --retry 5 --retry-all-errors -o /tmp/steamcmd.tar.gz https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
+  && curl -fsSL --retry 5 --retry-all-errors -o /tmp/proton.tar.gz "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${GE_PROTON_VERSION}/${GE_PROTON_VERSION}.tar.gz" \
+  && echo "${GE_PROTON_SHA512}  /tmp/proton.tar.gz" | sha512sum -c - \
+  && su steam -c "tar -xzf /tmp/steamcmd.tar.gz -C /opt/steamcmd && tar -xzf /tmp/proton.tar.gz -C /opt/proton --strip-components=1" \
+  && rm -f /tmp/steamcmd.tar.gz /tmp/proton.tar.gz
 
 # rcon-cli (MIT, gorcon): saveworld allo stop dell'immagine raw, dove non c'è
 # l'agent. Il checksum.txt della release pubblica solo MD5: lo SHA256 qui sotto
