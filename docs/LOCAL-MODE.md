@@ -63,7 +63,7 @@ docker compose -f docker/compose/local.compose.yml --env-file docker/compose/loc
 
 The panel can then only start and stop it (container name `GAME_CONTAINER_NAME`, default `arksa-game-server`). If you start the server from the panel before this step, you get an error that tells you to run this command. The first start downloads about 13 GB into the `arksa-game-data` volume (name from `GAME_SERVER_DATA_VOLUME`).
 
-Open `http://127.0.0.1:3100` (`PANEL_BIND`:`PANEL_PORT`), sign in with the first `ADMIN_EMAILS` address, create or apply a configuration and press the power button. Open UDP `GAME_PORT` (7777) and `QUERY_PORT` (27015) on the host firewall/router.
+Open `http://127.0.0.1:3100` (`PANEL_BIND`:`PANEL_PORT`), sign in with the first `ADMIN_EMAILS` address, create or apply a configuration and press the power button. Open UDP `GAME_PORT` (7777) on the host firewall/router.
 
 ## Backups: `BACKUP_GID` and folder permissions
 

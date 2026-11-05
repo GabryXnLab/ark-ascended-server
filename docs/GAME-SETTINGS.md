@@ -28,7 +28,7 @@ Three defaults are the effective ones of the project's launcher, because they ar
 
 RCON is always on: the launcher passes `?RCONEnabled=True` on the launch URL because the agent needs it for status, saves and auto-stop. `RCONEnabled` is not in the catalog; stored profiles that contain it among their scalar values stay saveable (`OBSOLETE_INFRASTRUCTURE_GUS_KEY_NAMES`) and the agent drops it before writing the INI.
 
-`RCONPort` is infrastructure-owned like the password: launcher and agent use the port from the `RCON_PORT` env (27020 by default) and ignore the INI one, so a profile cannot break status, saves and auto-stop or collide with the game ports (7777, 27015) or the agent's. Backend and agent reject `RCONPort` in values and raw text, `readIni` hides it, and the launcher/agent realign the line in the INI.
+`RCONPort` is infrastructure-owned like the password: launcher and agent use the port from the `RCON_PORT` env (27020 by default) and ignore the INI one, so a profile cannot break status, saves and auto-stop or collide with the game port (7777) or the agent's. Backend and agent reject `RCONPort` in values and raw text, `readIni` hides it, and the launcher/agent realign the line in the INI.
 
 `ServerAdminPassword` does not follow normal ASA default semantics: the launcher always sets it from `RCON_PASSWORD`, the same secret the agent uses. Keeping it out of profiles prevents `GET /configs`, copies between configurations or members' proposals from distributing a credential that can run admin commands. Backend and agent also reject direct attempts through scalar values or the advanced INI editor.
 

@@ -103,21 +103,6 @@ resource "oci_core_network_security_group_security_rule" "game_udp_7777" {
   }
 }
 
-resource "oci_core_network_security_group_security_rule" "game_udp_27015" {
-  network_security_group_id = oci_core_network_security_group.game.id
-  direction                 = "INGRESS"
-  protocol                  = "17"
-  source                    = "0.0.0.0/0"
-  source_type               = "CIDR_BLOCK"
-  description               = "Steam query (UDP)"
-  udp_options {
-    destination_port_range {
-      min = 27015
-      max = 27015
-    }
-  }
-}
-
 resource "oci_core_network_security_group_security_rule" "game_tcp_rcon" {
   network_security_group_id = oci_core_network_security_group.game.id
   direction                 = "INGRESS"

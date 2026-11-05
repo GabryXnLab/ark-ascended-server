@@ -25,7 +25,7 @@ The managed image is built `FROM` the raw one and only adds Node.js and the agen
 - x86_64 Docker host with Docker Compose v2 (ASA and Proton are x86 only; ARM hosts are not supported for the game server, the control plane image is also built for arm64).
 - RAM: 16 GB or more recommended (a running ASA instance uses roughly 10-18 GB depending on map and mods).
 - Disk: about 30 GB free (the game alone is about 13 GB, plus the Proton prefix, mods and saves).
-- Open UDP ports `7777` (game) and `27015` (query). RCON is TCP `27020` and stays internal unless you publish it.
+- Open UDP port `7777` (game). RCON is TCP `27020` and stays internal unless you publish it.
 
 ## Quick start: raw
 
@@ -35,7 +35,7 @@ docker run -d --name asa \
   --stop-timeout 90 \
   -e RCON_PASSWORD=change-me \
   -e ARK_MAP=TheIsland_WP \
-  -p 7777:7777/udp -p 27015:27015/udp \
+  -p 7777:7777/udp \
   -v asa-data:/data \
   ghcr.io/gabryxnlab/ark-ascended-server:latest
 docker logs -f asa

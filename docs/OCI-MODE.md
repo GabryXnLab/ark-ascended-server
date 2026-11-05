@@ -36,7 +36,7 @@ Useful outputs: `control_plane_url`, `control_plane_public_ip`, `game_server_ins
 
 Then point the Google OAuth/Supabase settings at the panel URL, open it and sign in with the first address in `admin_emails`.
 
-Open ports (NSG): UDP 7777 and 27015 from anywhere on the game server; RCON (27020), the agent (8787) and SSH only from inside the VCN; the control plane has 80/443 open and SSH.
+Open ports (NSG): UDP 7777 from anywhere on the game server; RCON (27020), the agent (8787) and SSH only from inside the VCN; the control plane has 80/443 open and SSH.
 
 ## How it is wired
 

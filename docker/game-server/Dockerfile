@@ -129,7 +129,7 @@ RUN chmod 755 /opt/arksa/launch.sh /opt/arksa/install-xaudio2.sh /opt/arksa/stan
   && chown -R steam:steam /opt/arksa
 
 VOLUME ["/data"]
-EXPOSE 7777/udp 27015/udp 27020/tcp
+EXPOSE 7777/udp 27020/tcp
 
 # Niente "USER steam" qui: il container parte come root così l'entrypoint può
 # sistemare i permessi di un volume /data appena creato (di proprietà root)

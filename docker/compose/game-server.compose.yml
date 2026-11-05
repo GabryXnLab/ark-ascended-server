@@ -64,7 +64,6 @@ services:
       - game-server-data:/data
     ports:
       - "7777:7777/udp"
-      - "27015:27015/udp"
       - "8787:8787/tcp"
 
 volumes:

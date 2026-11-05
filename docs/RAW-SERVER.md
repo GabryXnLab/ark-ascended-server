@@ -34,10 +34,10 @@ Server settings:
 | `SERVER_PLATFORM` | `ALL` | `-ServerPlatform`: `ALL` or `+`-joined `PC`, `XSX`, `PS5`, `WINGDK` (see [Troubleshooting](#troubleshooting)) |
 | `EXTRA_ARGS` | empty | Extra command line arguments, appended unquoted (word-split) |
 | `GAME_PORT` | `7777` | UDP game port |
-| `QUERY_PORT` | `27015` | UDP query port |
+| `QUERY_PORT` | `27015` | Passed as `?QueryPort=`. ASA opens no query socket, so this port does not need to be opened or published: server discovery goes through EOS. |
 | `RCON_PORT` | `27020` | TCP RCON port |
 
-If you change `GAME_PORT` or `QUERY_PORT`, change the published ports in the compose file accordingly.
+If you change `GAME_PORT`, change the published port in the compose file accordingly.
 
 Update and shutdown behaviour:
 
@@ -62,7 +62,6 @@ Rarely needed (defaults match the image layout): `ARK_APPID`, `ARK_INSTALL_DIR`,
 |---|---|
 | `/data` (volume) | Everything persistent: `/data/ark` (game, about 13 GB, config and saves under `ShooterGame/Saved`), `/data/proton-prefix` (Wine prefix and shader caches), `/data/.steam`, `/data/cache` (XAudio2 DLL), `/data/active-mods` |
 | `7777/udp` | Game |
-| `27015/udp` | Query (server list) |
 | `27020/tcp` | RCON. Not published by default; the clean stop uses `127.0.0.1` inside the container. If you publish it, restrict it with a firewall. |
 
 The container starts as root only to fix the ownership of a fresh volume, then runs everything as the unprivileged user `steam` (UID/GID 1000). A bind mount must be writable by UID 1000 or the first start will `chown` it.
@@ -107,7 +106,7 @@ docker compose -f docker/compose/server-raw.compose.yml --env-file docker/compos
 ## Troubleshooting
 
 **The server does not appear in the in-game list.**
-Check, in this order: (1) the ports are open on the host and any firewall/NAT: UDP 7777 and 27015; (2) the client and server build match (see below); (3) on console, the "Show Player Servers" option must be ticked in the session filter. If the server is listed nowhere, joining by IP (`host:7777`) from a PC client tells you whether the problem is networking or listing.
+Check, in this order: (1) the port is open on the host and any firewall/NAT: UDP 7777; (2) the client and server build match (see below); (3) on console, the "Show Player Servers" option must be ticked in the session filter. If the server is listed nowhere, joining by IP (`host:7777`) from a PC client tells you whether the problem is networking or listing.
 
 **Console players (PS5/Xbox) cannot see or join it.**
 Console crossplay needs `-ServerPlatform`. The default `SERVER_PLATFORM=ALL` allows everyone; if you set a combination, include the consoles you want (for example `PC+XSX+PS5`). A typo makes the server invisible, so use exactly those tokens. On the console, "Show Player Servers" must be enabled in the session filter. Mods that are not console-compatible block console clients.

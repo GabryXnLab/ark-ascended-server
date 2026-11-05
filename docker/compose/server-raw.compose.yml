@@ -25,7 +25,6 @@ services:
       - asa-data:/data
     ports:
       - "7777:7777/udp"
-      - "27015:27015/udp"
       # RCON opzionale dall'esterno: lo stop usa comunque 127.0.0.1 nel
       # container. Se lo pubblichi, limita l'accesso con il firewall.
       # - "27020:27020/tcp"

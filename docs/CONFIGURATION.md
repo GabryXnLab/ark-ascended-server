@@ -112,7 +112,7 @@ In local mode ([LOCAL-MODE.md](LOCAL-MODE.md)) most of these are set for you by 
 
 ### Game launch variables (read by `launch.sh`)
 
-`SESSION_NAME`, `MAX_PLAYERS`, `GAME_PORT`, `QUERY_PORT`, `SERVER_PASSWORD`, `SERVER_PLATFORM`, `EXTRA_ARGS` and the Wine/Proton tuning variables behave as in [RAW-SERVER.md](RAW-SERVER.md#environment-variables). In the managed version the panel writes `SessionName`, `MaxPlayers`, `ServerPlatform` and `ServerPassword` into the INI from the active configuration, and those values override the env defaults. `ARK_ADMIN_LIST_URL` is set by the managed entrypoint to the agent's loopback endpoint; in the raw image it is never set.
+`SESSION_NAME`, `MAX_PLAYERS`, `GAME_PORT`, `SERVER_PASSWORD`, `SERVER_PLATFORM`, `EXTRA_ARGS` and the Wine/Proton tuning variables behave as in [RAW-SERVER.md](RAW-SERVER.md#environment-variables). In the managed version the panel writes `SessionName`, `MaxPlayers`, `ServerPlatform` and `ServerPassword` into the INI from the active configuration, and those values override the env defaults. `ARK_ADMIN_LIST_URL` is set by the managed entrypoint to the agent's loopback endpoint; in the raw image it is never set.
 
 ### File locations
 

@@ -497,10 +497,6 @@ export function Dashboard({ status, metricsHistory, me, onChange }: {
             <span>Porta di gioco</span>
             <b>7777</b>
           </div>
-          <div className="kv">
-            <span>Porta query</span>
-            <b>27015</b>
-          </div>
           {activeConfig && (
             <div className="kv">
               <span>Piattaforme</span>
